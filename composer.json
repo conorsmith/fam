@@ -1,0 +1,13 @@
+{
+    "require": {
+        "symfony/var-dumper": "^5.0",
+        "doctrine/dbal": "^2.10",
+        "ramsey/uuid": "^3.9",
+        "vlucas/phpdotenv": "^4.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "ConorSmith\\Fam\\": "src"
+        }
+    }
+}
