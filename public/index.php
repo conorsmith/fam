@@ -20,7 +20,7 @@ $db = DriverManager::getConnection([
     'driver'   => "pdo_mysql",
 ]);
 
-define('FEED_TTL', 60 * 60 * 12);
+define('FEED_TTL', 60 * 60 * 24);
 
 $now = new DateTimeImmutable("now", new DateTimeZone("Europe/Dublin"));
 
@@ -83,7 +83,7 @@ if (preg_match("#^/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
         'name'         => $fam->getName(),
         'speciesIcon'  => $speciesIconsById[$fam->getSpeciesId()],
         'isAlive'      => $fam->isAlive($now),
-        'isDistressed' => $fam->isDistressed($now),
+        'distress'     => $fam->getDistress($now),
         'isHappy'      => $fam->isHappy($now),
     ];
 

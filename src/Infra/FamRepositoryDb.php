@@ -59,15 +59,23 @@ final class FamRepositoryDb
                 return $now < $this->feedDeadline;
             }
 
-            public function isDistressed(DateTimeImmutable $now): bool
+            public function getDistress(DateTimeImmutable $now): float
             {
                 if (!$this->isAlive($now)) {
-                    return false;
+                    return 0;
                 }
 
                 $secondsToDeadline = $this->feedDeadline->getTimestamp() - $now->getTimestamp();
 
-                return FEED_TTL / 2 > $secondsToDeadline;
+                $distressPeriod = FEED_TTL / 3 * 2;
+
+                if ($secondsToDeadline > $distressPeriod) {
+                    return 0;
+                }
+
+                $timeDistressed = $distressPeriod - $secondsToDeadline;
+
+                return $timeDistressed / $distressPeriod;
             }
 
             public function isHappy(DateTimeImmutable $now): bool
