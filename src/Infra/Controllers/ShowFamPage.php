@@ -49,6 +49,7 @@ final class ShowFamPage
             'isAlive'      => $fam->isAlive($this->now),
             'distress'     => $fam->getDistress($this->now),
             'isHappy'      => $fam->isHappy($this->now),
+            'isSick'       => $fam->isSick($this->now),
         ];
 
         include __DIR__ . "/../Templates/Home.php";

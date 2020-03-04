@@ -32,6 +32,10 @@
             animation: distressed 1s infinite;
         }
 
+        .fam-sick {
+            animation: sick 1s infinite;
+        }
+
         @keyframes happy {
             50% {
                 transform: translateY(-1rem);
@@ -41,6 +45,12 @@
         @keyframes distressed {
             50% {
                 transform: translateX(<?=$fam->distress * 4?>rem);
+            }
+        }
+
+        @keyframes sick {
+            50% {
+                transform: rotate(45deg);
             }
         }
     </style>
@@ -56,7 +66,13 @@
                     <?=$fam->name?>
                 </div>
                 <div class="card-body">
-                    <div class="fam <?=$fam->isHappy ? "fam-happy" : ""?> <?=$fam->distress > 0 ? "fam-distressed" : ""?>" style="text-align: center; font-size: 10rem; line-height: 1;">
+                    <div class="fam
+                                <?=$fam->isHappy ? "fam-happy" : ""?>
+                                <?=$fam->distress > 0 ? "fam-distressed" : ""?>
+                                <?=$fam->isSick ? "fam-sick" : ""?>
+                                "
+                         style="text-align: center; font-size: 10rem; line-height: 1;"
+                    >
                         <?php if ($fam->isAlive) : ?>
                             <i class="fas fa-fw fa-<?=$fam->speciesIcon?>"></i>
                         <?php else : ?>

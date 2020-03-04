@@ -20,13 +20,20 @@ final class FamRepositoryDb
 
     public function find(string $id)
     {
-        $row = $this->db->fetchAssoc("SELECT * FROM fams WHERE id = ?", [$id]);
+        $famRow = $this->db->fetchAssoc("SELECT * FROM fams WHERE id = ?", [$id]);
+        $feedRows = $this->db->fetchAll("SELECT * FROM fam_feeds WHERE fam_id = ?", [$id]);
 
-        $feedDeadline = DateTime::createFromFormat("Y-m-d H:i:s", $row['last_feed_time']);
-        $feedDeadline->add(new DateInterval("PT{$row['feed_ttl']}S"));
+        $feedTimes = [];
+
+        foreach ($feedRows as $feedRow) {
+            $feedTimes[] = DateTimeImmutable::createFromFormat("Y-m-d H:i:s", $feedRow['feed_time']);
+        }
+
+        $feedDeadline = DateTime::createFromFormat("Y-m-d H:i:s", $famRow['last_feed_time']);
+        $feedDeadline->add(new DateInterval("PT{$famRow['feed_ttl']}S"));
         $feedDeadline = DateTimeImmutable::createFromMutable($feedDeadline);
 
-        return new class($row['name'], $row['species_id'], $feedDeadline)
+        return new class($famRow['name'], $famRow['species_id'], $feedDeadline, $feedTimes)
         {
             /** @var string */
             private $name;
@@ -37,11 +44,19 @@ final class FamRepositoryDb
             /** @var DateTimeImmutable */
             private $feedDeadline;
 
-            public function __construct(string $name, string $speciesId, DateTimeImmutable $feedDeadline)
-            {
+            /** @var array */
+            private $feedTimes;
+
+            public function __construct(
+                string $name,
+                string $speciesId,
+                DateTimeImmutable $feedDeadline,
+                array $feedTimes
+            ) {
                 $this->name = $name;
                 $this->speciesId = $speciesId;
                 $this->feedDeadline = $feedDeadline;
+                $this->feedTimes = $feedTimes;
             }
 
             public function getName(): string
@@ -56,7 +71,8 @@ final class FamRepositoryDb
 
             public function isAlive(DateTimeImmutable $now): bool
             {
-                return $now < $this->feedDeadline;
+                return $now < $this->feedDeadline
+                    && $this->countFeedTimesInWindow($now) < 40;
             }
 
             public function getDistress(DateTimeImmutable $now): float
@@ -84,8 +100,38 @@ final class FamRepositoryDb
                     return false;
                 }
 
+                if ($this->isSick($now)) {
+                    return false;
+                }
+
                 $secondsToDeadline = $this->feedDeadline->getTimestamp() - $now->getTimestamp();
                 return FEED_TTL - $secondsToDeadline < 10;
+            }
+
+            public function isSick(DateTimeImmutable $now): bool
+            {
+                if (!$this->isAlive($now)) {
+                    return false;
+                }
+
+                return $this->countFeedTimesInWindow($now) > 6;
+            }
+
+            private function countFeedTimesInWindow(DateTimeImmutable $now): int
+            {
+                $startOfFeedingWindow = DateTime::createFromFormat("U", strval($now->getTimestamp()));
+                $startOfFeedingWindow->sub(new DateInterval("PT" . FEED_TTL . "S"));
+                $startOfFeedingWindow = DateTimeImmutable::createFromMutable($startOfFeedingWindow);
+
+                $feedTimesInWindow = [];
+
+                foreach ($this->feedTimes as $feedTime) {
+                    if ($feedTime > $startOfFeedingWindow) {
+                        $feedTimesInWindow[] = $feedTime;
+                    }
+                }
+
+                return count($feedTimesInWindow);
             }
         };
     }
