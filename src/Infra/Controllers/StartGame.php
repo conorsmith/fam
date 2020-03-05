@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace ConorSmith\Fam\Infra\Controllers;
 
+use DateTime;
 use DateTimeImmutable;
+use DateInterval;
 use Doctrine\DBAL\Connection;
 use Ramsey\Uuid\Uuid;
 
@@ -42,6 +44,38 @@ final class StartGame
             'feed_ttl'       => FEED_TTL,
         ]);
 
+        $firstHatchFeed = $this->createTimeNSecondsAgo(1);
+        $secondHatchFeed = $this->createTimeNSecondsAgo(2);
+        $thirdHatchFeed = $this->createTimeNSecondsAgo(3);
+        $fourthHatchFeed = $this->createTimeNSecondsAgo(4);
+
+        $this->db->insert("fam_feeds", [
+            'fam_id'    => $id,
+            'feed_time' => $firstHatchFeed->format("Y-m-d H:i:s"),
+        ]);
+
+        $this->db->insert("fam_feeds", [
+            'fam_id'    => $id,
+            'feed_time' => $secondHatchFeed->format("Y-m-d H:i:s"),
+        ]);
+
+        $this->db->insert("fam_feeds", [
+            'fam_id'    => $id,
+            'feed_time' => $thirdHatchFeed->format("Y-m-d H:i:s"),
+        ]);
+
+        $this->db->insert("fam_feeds", [
+            'fam_id'    => $id,
+            'feed_time' => $fourthHatchFeed->format("Y-m-d H:i:s"),
+        ]);
+
         header("Location: /{$id}");
+    }
+
+    private function createTimeNSecondsAgo(int $n): DateTimeImmutable
+    {
+        $datetime = DateTime::createFromFormat("U", strval($this->now->getTimestamp()));
+        $datetime->sub(new DateInterval("PT{$n}S"));
+        return DateTimeImmutable::createFromMutable($datetime);
     }
 }

@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace ConorSmith\Fam\Infra;
 
-use DateInterval;
-use DateTime;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 
@@ -29,11 +27,7 @@ final class FamRepositoryDb
             $feedTimes[] = DateTimeImmutable::createFromFormat("Y-m-d H:i:s", $feedRow['feed_time']);
         }
 
-        $feedDeadline = DateTime::createFromFormat("Y-m-d H:i:s", $famRow['last_feed_time']);
-        $feedDeadline->add(new DateInterval("PT{$famRow['feed_ttl']}S"));
-        $feedDeadline = DateTimeImmutable::createFromMutable($feedDeadline);
-
-        return new class($famRow['name'], $famRow['species_id'], $feedDeadline, $feedTimes)
+        return new class($famRow['name'], $famRow['species_id'], $feedTimes)
         {
             /** @var string */
             private $name;
@@ -41,21 +35,16 @@ final class FamRepositoryDb
             /** @var string */
             private $speciesId;
 
-            /** @var DateTimeImmutable */
-            private $feedDeadline;
-
             /** @var array */
             private $feedTimes;
 
             public function __construct(
                 string $name,
                 string $speciesId,
-                DateTimeImmutable $feedDeadline,
                 array $feedTimes
             ) {
                 $this->name = $name;
                 $this->speciesId = $speciesId;
-                $this->feedDeadline = $feedDeadline;
                 $this->feedTimes = $feedTimes;
             }
 
@@ -71,8 +60,8 @@ final class FamRepositoryDb
 
             public function isAlive(DateTimeImmutable $now): bool
             {
-                return $now < $this->feedDeadline
-                    && $this->countFeedTimesInWindow($now) < 40;
+                return $this->getCalories($now) > 0
+                    && $this->getCalories($now) < 40 * 500;
             }
 
             public function getDistress(DateTimeImmutable $now): float
@@ -81,17 +70,11 @@ final class FamRepositoryDb
                     return 0;
                 }
 
-                $secondsToDeadline = $this->feedDeadline->getTimestamp() - $now->getTimestamp();
-
-                $distressPeriod = FEED_TTL / 3 * 2;
-
-                if ($secondsToDeadline > $distressPeriod) {
+                if ($this->getCalories($now) >= 3 * 500) {
                     return 0;
                 }
 
-                $timeDistressed = $distressPeriod - $secondsToDeadline;
-
-                return $timeDistressed / $distressPeriod;
+                return ((3 * 500) - $this->getCalories($now)) / (3 * 500);
             }
 
             public function isHappy(DateTimeImmutable $now): bool
@@ -104,8 +87,9 @@ final class FamRepositoryDb
                     return false;
                 }
 
-                $secondsToDeadline = $this->feedDeadline->getTimestamp() - $now->getTimestamp();
-                return FEED_TTL - $secondsToDeadline < 10;
+                $secondsSinceLastFeed = $now->getTimestamp() - $this->getLatestFeedTime()->getTimestamp();
+
+                return $secondsSinceLastFeed < 10;
             }
 
             public function isSick(DateTimeImmutable $now): bool
@@ -114,24 +98,28 @@ final class FamRepositoryDb
                     return false;
                 }
 
-                return $this->countFeedTimesInWindow($now) > 6;
+                return $this->getCalories($now) > 6 * 500;
             }
 
-            private function countFeedTimesInWindow(DateTimeImmutable $now): int
+            private function getCalories(DateTimeImmutable $now): float
             {
-                $startOfFeedingWindow = DateTime::createFromFormat("U", strval($now->getTimestamp()));
-                $startOfFeedingWindow->sub(new DateInterval("PT" . FEED_TTL . "S"));
-                $startOfFeedingWindow = DateTimeImmutable::createFromMutable($startOfFeedingWindow);
+                $calories = 0;
 
-                $feedTimesInWindow = [];
-
+                /** @var DateTimeImmutable $feedTime */
                 foreach ($this->feedTimes as $feedTime) {
-                    if ($feedTime > $startOfFeedingWindow) {
-                        $feedTimesInWindow[] = $feedTime;
+                    $secondsSinceLastFeed = $now->getTimestamp() - $feedTime->getTimestamp();
+                    $secondsRemainingForFeed = FEED_TTL - $secondsSinceLastFeed;
+                    if ($secondsRemainingForFeed > 0) {
+                        $calories += 500 * $secondsRemainingForFeed / FEED_TTL;
                     }
                 }
 
-                return count($feedTimesInWindow);
+                return $calories;
+            }
+
+            private function getLatestFeedTime(): DateTimeImmutable
+            {
+                return $this->feedTimes[count($this->feedTimes) - 1];
             }
         };
     }
