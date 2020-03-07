@@ -98,7 +98,10 @@ final class FamRepositoryDb
                     return false;
                 }
 
-                return $this->getCalories($now) > 6 * 500;
+                $secondsSinceLastFeed = $now->getTimestamp() - $this->getLatestFeedTime()->getTimestamp();
+
+                return $secondsSinceLastFeed < 10
+                    && $this->getCalories($now) > 6 * 500;
             }
 
             private function getCalories(DateTimeImmutable $now): float
