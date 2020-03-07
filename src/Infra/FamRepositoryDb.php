@@ -5,6 +5,7 @@ namespace ConorSmith\Fam\Infra;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Ramsey\Uuid\Uuid;
 
 final class FamRepositoryDb
 {
@@ -27,8 +28,11 @@ final class FamRepositoryDb
             $feedTimes[] = DateTimeImmutable::createFromFormat("Y-m-d H:i:s", $feedRow['feed_time']);
         }
 
-        return new class($famRow['name'], $famRow['species_id'], $feedTimes)
+        return new class(Uuid::fromString($famRow['id']), $famRow['name'], $famRow['species_id'], $feedTimes)
         {
+            /** @var Uuid */
+            private $id;
+
             /** @var string */
             private $name;
 
@@ -39,13 +43,25 @@ final class FamRepositoryDb
             private $feedTimes;
 
             public function __construct(
+                Uuid $id,
                 string $name,
                 string $speciesId,
                 array $feedTimes
             ) {
+                $this->id = $id;
                 $this->name = $name;
                 $this->speciesId = $speciesId;
                 $this->feedTimes = $feedTimes;
+            }
+
+            public function feed(DateTimeImmutable $feedTime): void
+            {
+                $this->feedTimes[] = $feedTime;
+            }
+
+            public function getId(): Uuid
+            {
+                return $this->id;
             }
 
             public function getName(): string
@@ -56,6 +72,11 @@ final class FamRepositoryDb
             public function getSpeciesId(): string
             {
                 return $this->speciesId;
+            }
+
+            public function getFeedTimes(): array
+            {
+                return $this->feedTimes;
             }
 
             public function isAlive(DateTimeImmutable $now): bool
@@ -125,5 +146,28 @@ final class FamRepositoryDb
                 return $secondsSinceLastFeed <= 1;
             }
         };
+    }
+
+    public function save($fam): void
+    {
+        $this->db->transactional(function ($db) use ($fam) {
+
+            $this->db->executeQuery(
+                "DELETE FROM fam_feeds WHERE fam_id = ?",
+                [
+                    $fam->getId(),
+                ]
+            );
+
+            /** @var DateTimeImmutable $feedTime */
+            foreach ($fam->getFeedTimes() as $feedTime) {
+                $this->db->insert("fam_feeds", [
+                    'id'        => Uuid::uuid4(),
+                    'fam_id'    => $fam->getId(),
+                    'feed_time' => $feedTime->format("Y-m-d H:i:s"),
+                ]);
+            }
+
+        });
     }
 }

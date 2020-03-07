@@ -4,11 +4,8 @@ declare(strict_types=1);
 namespace ConorSmith\Fam\Infra\Controllers;
 
 use ConorSmith\Fam\Infra\FamRepositoryDb;
-use DateInterval;
-use DateTime;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
-use Ramsey\Uuid\Uuid;
 
 final class FeedFam
 {
@@ -28,34 +25,18 @@ final class FeedFam
     {
         $id = substr($_SERVER['REQUEST_URI'], 1, 36);
 
-        $fam = (new FamRepositoryDb($this->db))->find($id);
+        $famRepo = new FamRepositoryDb($this->db);
+
+        $fam = $famRepo->find($id);
 
         if (!$fam->isAlive($this->now)) {
             http_response_code(500);
             return;
         }
 
-        $this->db->transactional(function ($db) use ($id) {
+        $fam->feed($this->now);
 
-            $startOfFeedingWindow = DateTime::createFromFormat("U", strval($this->now->getTimestamp()));
-            $startOfFeedingWindow->sub(new DateInterval("PT" . FEED_TTL . "S"));
-            $startOfFeedingWindow = DateTimeImmutable::createFromMutable($startOfFeedingWindow);
-
-            $this->db->executeQuery(
-                "DELETE FROM fam_feeds WHERE fam_id = ? AND feed_time < ?",
-                [
-                    $id,
-                    $startOfFeedingWindow->format("Y-m-d H:i:s"),
-                ]
-            );
-
-            $this->db->insert("fam_feeds", [
-                'id'        => Uuid::uuid4(),
-                'fam_id'    => $id,
-                'feed_time' => $this->now->format("Y-m-d H:i:s"),
-            ]);
-
-        });
+        $famRepo->save($fam);
 
         header("Location: /{$id}");
     }
