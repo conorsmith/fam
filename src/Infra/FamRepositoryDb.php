@@ -87,9 +87,7 @@ final class FamRepositoryDb
                     return false;
                 }
 
-                $secondsSinceLastFeed = $now->getTimestamp() - $this->getLatestFeedTime()->getTimestamp();
-
-                return $secondsSinceLastFeed < 10;
+                return $this->wasJustFed($now);
             }
 
             public function isSick(DateTimeImmutable $now): bool
@@ -98,9 +96,7 @@ final class FamRepositoryDb
                     return false;
                 }
 
-                $secondsSinceLastFeed = $now->getTimestamp() - $this->getLatestFeedTime()->getTimestamp();
-
-                return $secondsSinceLastFeed < 10
+                return $this->wasJustFed($now)
                     && $this->getCalories($now) > 6 * 500;
             }
 
@@ -120,9 +116,13 @@ final class FamRepositoryDb
                 return $calories;
             }
 
-            private function getLatestFeedTime(): DateTimeImmutable
+            private function wasJustFed(DateTimeImmutable $now): bool
             {
-                return $this->feedTimes[count($this->feedTimes) - 1];
+                $latestFeedTime = $this->feedTimes[count($this->feedTimes) - 1];
+
+                $secondsSinceLastFeed = $now->getTimestamp() - $latestFeedTime->getTimestamp();
+
+                return $secondsSinceLastFeed <= 1;
             }
         };
     }
