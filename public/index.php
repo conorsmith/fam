@@ -7,7 +7,6 @@ use ConorSmith\Fam\Infra\Controllers\ShowStartGamePage;
 use ConorSmith\Fam\Infra\Controllers\StartGame;
 use Doctrine\DBAL\DriverManager;
 use Dotenv\Dotenv;
-use Ramsey\Uuid\Uuid;
 
 require_once __DIR__ . "/../vendor/autoload.php";
 
