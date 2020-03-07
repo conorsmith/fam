@@ -40,8 +40,6 @@ final class StartGame
             'id'             => $id,
             'name'           => $_POST['name'],
             'species_id'     => $_POST['egg'],
-            'last_feed_time' => $this->now->format("Y-m-d H:i:s"),
-            'feed_ttl'       => FEED_TTL,
         ]);
 
         $firstHatchFeed = $this->createTimeNSecondsAgo(1);

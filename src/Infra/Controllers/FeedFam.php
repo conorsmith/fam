@@ -40,13 +40,6 @@ final class FeedFam
             $startOfFeedingWindow->sub(new DateInterval("PT" . FEED_TTL . "S"));
             $startOfFeedingWindow = DateTimeImmutable::createFromMutable($startOfFeedingWindow);
 
-            $this->db->update("fams", [
-                'last_feed_time' => $this->now->format("Y-m-d H:i:s"),
-                'feed_ttl'       => FEED_TTL,
-            ], [
-                'id' => $id,
-            ]);
-
             $this->db->executeQuery(
                 "DELETE FROM fam_feeds WHERE fam_id = ? AND feed_time < ?",
                 [
