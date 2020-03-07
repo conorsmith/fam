@@ -23,8 +23,6 @@ $db = DriverManager::getConnection([
     'driver'   => "pdo_mysql",
 ]);
 
-define('FEED_TTL', 60 * 60 * 24);
-
 $now = new DateTimeImmutable("now", new DateTimeZone("Europe/Dublin"));
 
 if ($_SERVER['REQUEST_METHOD'] === "GET"

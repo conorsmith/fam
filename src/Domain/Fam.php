@@ -8,6 +8,8 @@ use Ramsey\Uuid\Uuid;
 
 final class Fam
 {
+    private const EFFECTIVE_FEED_PERIOD = 60 * 60 * 24;
+
     /** @var Uuid */
     private $id;
 
@@ -106,9 +108,9 @@ final class Fam
         /** @var DateTimeImmutable $feedTime */
         foreach ($this->feedTimes as $feedTime) {
             $secondsSinceLastFeed = $now->getTimestamp() - $feedTime->getTimestamp();
-            $secondsRemainingForFeed = FEED_TTL - $secondsSinceLastFeed;
+            $secondsRemainingForFeed = self::EFFECTIVE_FEED_PERIOD - $secondsSinceLastFeed;
             if ($secondsRemainingForFeed > 0) {
-                $calories += 500 * $secondsRemainingForFeed / FEED_TTL;
+                $calories += 500 * $secondsRemainingForFeed / self::EFFECTIVE_FEED_PERIOD;
             }
         }
 
