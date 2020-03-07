@@ -19,7 +19,7 @@ final class FamRepositoryDb
     public function find(string $id)
     {
         $famRow = $this->db->fetchAssoc("SELECT * FROM fams WHERE id = ?", [$id]);
-        $feedRows = $this->db->fetchAll("SELECT * FROM fam_feeds WHERE fam_id = ?", [$id]);
+        $feedRows = $this->db->fetchAll("SELECT * FROM fam_feeds WHERE fam_id = ? ORDER BY feed_time", [$id]);
 
         $feedTimes = [];
 
