@@ -38,6 +38,7 @@ final class StartGame
             'id'             => $id,
             'name'           => $_POST['name'],
             'species_id'     => $_POST['egg'],
+            'hatched_at'     => $this->now->format("Y-m-d H:i:s"),
         ]);
 
         for ($i = 0; $i < 4; $i++) {
