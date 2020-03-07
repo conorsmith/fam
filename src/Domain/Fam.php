@@ -22,21 +22,31 @@ final class Fam
     /** @var array */
     private $feedTimes;
 
+    /** @var array */
+    private $playTimes;
+
     public function __construct(
         Uuid $id,
         string $name,
         string $speciesId,
-        array $feedTimes
+        array $feedTimes,
+        array $playTimes
     ) {
         $this->id = $id;
         $this->name = $name;
         $this->speciesId = $speciesId;
         $this->feedTimes = $feedTimes;
+        $this->playTimes = $playTimes;
     }
 
     public function feed(DateTimeImmutable $feedTime): void
     {
         $this->feedTimes[] = $feedTime;
+    }
+
+    public function play(DateTimeImmutable $playTime): void
+    {
+        $this->playTimes[] = $playTime;
     }
 
     public function getId(): Uuid
@@ -57,6 +67,11 @@ final class Fam
     public function getFeedTimes(): array
     {
         return $this->feedTimes;
+    }
+
+    public function getPlayTimes(): array
+    {
+        return $this->playTimes;
     }
 
     public function isAlive(DateTimeImmutable $now): bool
@@ -88,7 +103,8 @@ final class Fam
             return false;
         }
 
-        return $this->wasJustFed($now);
+        return $this->wasJustFed($now)
+            || $this->wasJustPlayedWith($now);
     }
 
     public function isSick(DateTimeImmutable $now): bool
@@ -124,5 +140,14 @@ final class Fam
         $secondsSinceLastFeed = $now->getTimestamp() - $latestFeedTime->getTimestamp();
 
         return $secondsSinceLastFeed <= 1;
+    }
+
+    private function wasJustPlayedWith(DateTimeImmutable $now): bool
+    {
+        $latestPlayTime = $this->playTimes[count($this->playTimes) - 1];
+
+        $secondsSinceLastPlay = $now->getTimestamp() - $latestPlayTime->getTimestamp();
+
+        return $secondsSinceLastPlay <= 1;
     }
 }

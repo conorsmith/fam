@@ -85,8 +85,10 @@
                                 <i class="fas fa-fw fa-hamburger"></i>
                             </button>
                         </form>
-                        <form action="/pet" method="POST">
-                            <button type="button" class="btn btn-light" disabled><i class="fas fa-fw fa-hand-paper"></i></button>
+                        <form action="/<?=$fam->id?>/play" method="POST">
+                            <button type="submit" class="btn btn-light" <?=$fam->isAlive ? "" : "disabled"?>>
+                                <i class="fas fa-fw fa-baseball-ball"></i>
+                            </button>
                         </form>
                         <form action="/post" method="POST">
                             <button type="button" class="btn btn-light" disabled><i class="fas fa-fw fa-mobile-alt"></i></button>

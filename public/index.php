@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 use ConorSmith\Fam\Infra\Controllers\FeedFam;
+use ConorSmith\Fam\Infra\Controllers\PlayWithFam;
 use ConorSmith\Fam\Infra\Controllers\ShowFamPage;
 use ConorSmith\Fam\Infra\Controllers\ShowStartGamePage;
 use ConorSmith\Fam\Infra\Controllers\StartGame;
@@ -47,6 +48,13 @@ if ($_SERVER['REQUEST_METHOD'] === "POST"
     && substr($_SERVER['REQUEST_URI'], 37) === "/feed"
 ) {
     (new FeedFam($db, $now))->handle();
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === "POST"
+    && substr($_SERVER['REQUEST_URI'], 37) === "/play"
+) {
+    (new PlayWithFam($db, $now))->handle();
     exit;
 }
 
