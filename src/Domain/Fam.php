@@ -144,6 +144,10 @@ final class Fam
 
     private function wasJustPlayedWith(DateTimeImmutable $now): bool
     {
+        if (count($this->playTimes) === 0) {
+            return false;
+        }
+
         $latestPlayTime = $this->playTimes[count($this->playTimes) - 1];
 
         $secondsSinceLastPlay = $now->getTimestamp() - $latestPlayTime->getTimestamp();
