@@ -8,6 +8,7 @@ use DateInterval;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Ramsey\Uuid\Uuid;
 
 final class FeedFam
 {
@@ -49,6 +50,7 @@ final class FeedFam
             );
 
             $this->db->insert("fam_feeds", [
+                'id'        => Uuid::uuid4(),
                 'fam_id'    => $id,
                 'feed_time' => $this->now->format("Y-m-d H:i:s"),
             ]);
