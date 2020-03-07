@@ -33,7 +33,7 @@
         }
 
         .fam-sick {
-            animation: sick 1s infinite;
+            animation: sick 1s 3;
         }
 
         @keyframes happy {
